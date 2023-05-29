@@ -263,12 +263,11 @@ cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=3, random_state=1)
 
 from scipy.stats import loguniform
 space = dict()
-space['solver'] = []
-space['penalty'] = []
-space['C'] = loguniform(1e-5, 100)
+space['solver'] = ['newton-cg', 'lbfgs', 'liblinear']
+space['penalty'] = ['none', 'l1', 'l2', 'elasticnet']
+#space['C'] = loguniform(1e-5, 100)
+space['C'] = [1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1, 10, 100]
 
-#Define search by Random Search for classification
-from sklearn.model_selection import RandomizedSearchCV
 
 for i in range(1,df.shape[1]):
     if(i<=16):
@@ -281,7 +280,14 @@ perf_results=perf_results.T # how to transpose a dataframe collumns <-> rows.
 
    
 #Define search by Random Search for classification
-search = RandomizedSearchCV(perf_results, space, n_iter=500, scoring='accuracy', n_jobs=-1, cv=cv, random_state=1)
-result = search.fit(X_train, target)
+#Define search by Grid Search for classification
+from sklearn.model_selection import RandomizedSearchCV
+from sklearn.model_selection import GridSearchCV
 
+#search = RandomizedSearchCV(perf_results, space, n_iter=500, scoring='accuracy', n_jobs=-1, cv=cv, random_state=1)
+search = GridSearchCV(perf_results, space, scoring='accuracy', n_jobs=1, cv=cv)
+result = search.fit(X_train, y_train)
 
+#Summarize result
+print('Best Score: %s', result.best_score_)
+print('Best Parameter: %s', result.best_params_)
