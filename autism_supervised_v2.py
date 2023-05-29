@@ -257,18 +257,31 @@ perf_results=pd.DataFrame()
 from ia_classifiers_model import IAClassifiersModel as classifiers
 clfiers = classifiers.classifiers()
 
+from sklearn.model_selection import RepeatedStratifiedKFold
+
+cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=3, random_state=1)
+
+from scipy.stats import loguniform
+space = dict()
+space['solver'] = []
+space['penalty'] = []
+space['C'] = loguniform(1e-5, 100)
+
+#Define search by Random Search for classification
+from sklearn.model_selection import RandomizedSearchCV
+
 for i in range(1,df.shape[1]):
     if(i<=16):
         Xt,Xteste = feature_selector(X_train,y_train,X_test,1,i)
         ypred = classification(clfiers[18],Xt,y_train,Xteste)
         accuracy, precision, recall, f1 = classification_reports(y_test,ypred)
         perf_results[i-3]=[i,accuracy, precision, recall, f1]
-    
 
 perf_results=perf_results.T # how to transpose a dataframe collumns <-> rows.
-perf_results.columns=['feature','accuracy','precision','recall','f1']
-#print the classification of classifier 4 by using the best 3, 4, ..., total of features
-print(perf_results)  
 
+   
+#Define search by Random Search for classification
+search = RandomizedSearchCV(perf_results, space, n_iter=500, scoring='accuracy', n_jobs=-1, cv=cv, random_state=1)
+result = search.fit(X_train, target)
 
 
